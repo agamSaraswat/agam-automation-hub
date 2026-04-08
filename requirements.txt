@@ -1,0 +1,37 @@
+# Agam Automation Hub — Dependencies
+# Install: pip install -r requirements.txt
+
+# ── Core ──
+python-dotenv==1.0.1
+pyyaml==6.0.2
+rich==13.9.4
+
+# ── AI / LLM ──
+anthropic==0.39.0
+
+# ── Web scraping ──
+requests==2.32.3
+beautifulsoup4==4.12.3
+feedparser==6.0.11
+lxml==5.3.0
+
+# ── Telegram ──
+python-telegram-bot==21.7
+
+# ── Gmail ──
+google-auth==2.36.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+google-api-python-client==2.155.0
+
+# ── LinkedIn ──
+# Uses requests (already listed above)
+
+# ── Scheduling ──
+apscheduler==3.10.4
+
+# ── Database ──
+# sqlite3 is stdlib — no extra dep needed
+
+# ── Utilities ──
+python-dateutil==2.9.0.post0

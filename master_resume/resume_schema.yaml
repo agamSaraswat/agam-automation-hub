@@ -1,0 +1,249 @@
+# Resume Schema — Structured fields for programmatic tailoring
+# The tailoring engine reads this to select the most relevant
+# skills, experiences, and achievements per job description.
+
+contact:
+  name: Agam Saraswat
+  email: saraswatagam012@gmail.com
+  phone: "+1 (508) 373-4260"
+  location: Massachusetts, USA
+  linkedin: https://linkedin.com/in/agamsaraswat
+  github: https://github.com/agamsaraswat
+
+summary_keywords:
+  - data scientist
+  - healthcare AI
+  - NLP
+  - predictive analytics
+  - HIPAA compliance
+  - explainable AI
+  - production ML
+  - cloud-native
+  - population health
+  - risk stratification
+
+skills:
+  languages:
+    - Python
+    - R
+    - SQL
+    - PySpark
+
+  ml_frameworks:
+    - Scikit-learn
+    - XGBoost
+    - LightGBM
+    - TensorFlow
+    - PyTorch
+    - CNN
+    - LSTM
+
+  nlp:
+    - BERT
+    - HuggingFace Transformers
+    - spaCy
+    - NLTK
+    - LDA
+    - NER
+    - Sentiment Analysis
+    - RAG
+    - LangChain
+    - Rasa
+    - Transfer Learning
+
+  statistics:
+    - ARIMA
+    - Prophet
+    - PCA
+    - A/B Testing
+    - Survival Analysis
+    - Cohort Analysis
+    - Clustering
+
+  cloud_aws:
+    - S3
+    - Redshift
+    - SageMaker
+    - Glue
+    - Kinesis
+    - Lambda
+    - ECS
+
+  cloud_azure:
+    - ADF
+    - Synapse
+    - Databricks
+    - Azure ML
+    - Event Hubs
+    - Purview
+    - Key Vault
+
+  cloud_gcp:
+    - BigQuery
+    - Vertex AI
+    - Dataproc
+
+  data_engineering:
+    - Snowflake
+    - Delta Lake
+    - PostgreSQL
+    - MongoDB
+    - MySQL
+    - Spark
+    - Airflow
+    - Kafka
+    - DBT
+    - MQTT
+    - AWS Glue
+
+  mlops:
+    - MLflow
+    - FastAPI
+    - Flask
+    - Streamlit
+    - Docker
+    - Kubernetes
+    - GitHub Actions
+    - Jenkins
+    - GitLab CI
+
+  bi_visualization:
+    - Power BI
+    - Tableau
+    - Looker
+    - QuickSight
+    - Azure Analysis Services
+    - Plotly
+
+  healthcare:
+    - EHR/EMR
+    - HL7
+    - FHIR
+    - ICD-10
+    - SNOMED CT
+    - CMS
+    - Claims Data
+
+  compliance:
+    - HIPAA
+    - HITECH
+    - GDPR
+    - PCI-DSS
+    - PHI De-identification
+    - Tokenization
+    - RBAC
+    - IAM
+    - AES-256
+    - TLS
+    - Data Lineage
+
+  collaboration:
+    - Git
+    - JIRA
+    - Confluence
+    - Notion
+    - Miro
+    - BPMN
+    - Agile/Scrum
+
+experience:
+  - company: Humana
+    role: Data Scientist — Predictive Analytics & Healthcare AI
+    dates: January 2025 – Present
+    location: Remote, USA
+    domain: healthcare
+    bullets:
+      - id: humana_1
+        text: "Designed and deployed NLP pipelines processing unstructured EHR clinical notes using BERT and spaCy for entity extraction, enabling population-health risk stratification across 500K+ patient records."
+        tags: [NLP, BERT, spaCy, EHR, population health, NER]
+        metric: "500K+ patient records"
+      - id: humana_2
+        text: "Built real-time patient readmission prediction models using XGBoost and LightGBM on Snowflake-hosted claims data, achieving 0.87 AUC and reducing preventable readmissions by 12%."
+        tags: [XGBoost, LightGBM, Snowflake, predictive modeling, readmission]
+        metric: "0.87 AUC, 12% reduction"
+      - id: humana_3
+        text: "Architected HIPAA-compliant ML serving infrastructure on AWS (SageMaker + Lambda + S3), with PHI de-identification pipelines and RBAC-enforced access controls."
+        tags: [AWS, SageMaker, Lambda, HIPAA, PHI, RBAC, MLOps]
+        metric: null
+      - id: humana_4
+        text: "Optimized Power BI dashboards connected to Azure Analysis Services, reducing BI load times by 45% through query tuning and incremental refresh strategies."
+        tags: [Power BI, Azure, BI optimization, performance]
+        metric: "45% load time reduction"
+      - id: humana_5
+        text: "Collaborated with clinical and actuarial teams to translate model outputs into actionable care-management interventions using SHAP-based explainability frameworks."
+        tags: [SHAP, explainability, stakeholder collaboration, clinical]
+        metric: null
+
+  - company: R-Financial Services
+    role: Data Scientist — Customer Analytics
+    dates: September 2021 – March 2023
+    location: India
+    domain: fintech
+    bullets:
+      - id: rfin_1
+        text: "Developed customer churn prediction and CLV models using ensemble methods (XGBoost, Random Forest), improving customer retention KPIs by 20% across a 2M-customer portfolio."
+        tags: [churn, CLV, XGBoost, Random Forest, retention]
+        metric: "20% retention improvement, 2M customers"
+      - id: rfin_2
+        text: "Built automated demand-forecasting pipelines using ARIMA and Prophet, deployed via Airflow DAGs on Docker/Kubernetes, reducing manual forecasting effort by 40%."
+        tags: [ARIMA, Prophet, Airflow, Docker, Kubernetes, forecasting]
+        metric: "40% effort reduction"
+      - id: rfin_3
+        text: "Engineered feature stores on AWS Redshift and Delta Lake, enabling self-service analytics for 15+ downstream business teams."
+        tags: [Redshift, Delta Lake, feature engineering, data platform]
+        metric: "15+ teams enabled"
+      - id: rfin_4
+        text: "Reduced BI report generation time by 40% through ETL optimization with PySpark and DBT on Snowflake."
+        tags: [PySpark, DBT, Snowflake, ETL, performance]
+        metric: "40% time reduction"
+      - id: rfin_5
+        text: "Led A/B testing frameworks for product recommendations, driving 8% incremental revenue from personalized offers."
+        tags: [A/B testing, recommendations, personalization, revenue]
+        metric: "8% revenue increase"
+
+  - company: Hexaware Technologies
+    role: Data Analyst — Multi-Domain Analytics
+    dates: August 2018 – January 2020
+    location: India
+    domain: consulting
+    bullets:
+      - id: hex_1
+        text: "Delivered analytics solutions across healthcare, retail, and insurance verticals, processing 10M+ records daily using SQL, Python, and PySpark on Azure Synapse."
+        tags: [SQL, Python, PySpark, Azure Synapse, multi-domain]
+        metric: "10M+ records daily"
+      - id: hex_2
+        text: "Built automated ETL pipelines using Azure Data Factory and Databricks, reducing data-processing costs by 30%."
+        tags: [ADF, Databricks, ETL, cost optimization]
+        metric: "30% cost reduction"
+      - id: hex_3
+        text: "Created executive dashboards in Tableau and Power BI, enabling real-time KPI tracking for C-suite stakeholders."
+        tags: [Tableau, Power BI, dashboards, executive reporting]
+        metric: null
+      - id: hex_4
+        text: "Performed cohort analysis and customer segmentation using K-means clustering, informing targeted marketing campaigns that increased conversion rates by 15%."
+        tags: [cohort analysis, clustering, segmentation, marketing]
+        metric: "15% conversion increase"
+
+education:
+  - degree: Master of Science in Data Analytics
+    school: Clark University
+    location: Worcester, MA
+    year: 2025
+  - degree: Bachelor of Science in Physics, Chemistry & Mathematics
+    school: HNBGU
+    location: India
+    year: 2018
+
+projects:
+  - name: CNN Image Classification — CIFAR-10
+    tags: [TensorFlow, Keras, CNN, ResNet, VGG-16, Transfer Learning, deep learning]
+    bullets:
+      - "Built deep learning image classifier using TensorFlow/Keras on CIFAR-10."
+      - "Implemented transfer learning with ResNet-50 and VGG-16, achieving 93% test accuracy."
+      - "Applied data augmentation, learning-rate scheduling, and early stopping."
+  - name: Housing Price Prediction — Flask API
+    tags: [Flask, Gradient Boosting, Random Forest, REST API, deployment]
+    bullets:
+      - "Developed end-to-end ML pipeline for housing price prediction."
+      - "Deployed as REST API using Flask with input validation."
+      - "Achieved R² = 0.91 on test data with engineered features."

@@ -1,0 +1,68 @@
+# ════════════════════════════════════════
+# Agam Automation Hub — Settings
+# ════════════════════════════════════════
+
+app:
+  name: "Agam Automation Hub"
+  version: "1.0.0"
+  timezone: "America/New_York"
+
+# ── Claude ──
+claude:
+  model: "claude-sonnet-4-20250514"
+  max_tokens: 4096
+  temperature: 0.7
+  # Lower temp for resume tailoring (precision matters)
+  tailoring_temperature: 0.3
+
+# ── Scheduling ──
+schedule:
+  morning_briefing: "07:00"
+  linkedin_post_window_start: 8   # hour (24h)
+  linkedin_post_window_end: 11
+  job_scraper: "08:30"
+  gmail_triage_interval_minutes: 30
+  daily_summary: "21:00"
+
+# ── Job Search ──
+jobs:
+  daily_limit: 10
+  min_match_score: 60
+  output_dir: "output/jobs"
+  db_path: "data/jobs.db"
+
+# ── LinkedIn ──
+linkedin:
+  output_dir: "output/linkedin"
+  queue_dir: "output/linkedin/queue"
+  posted_dir: "output/linkedin/posted"
+  post_min_words: 150
+  post_max_words: 250
+  token_expiry_warn_days: 50
+
+# ── Briefing ──
+briefing:
+  output_dir: "output/briefings"
+  max_words: 300
+  news_feeds:
+    - "https://hnrss.org/frontpage?count=5"
+    - "https://feeds.feedburner.com/TechCrunch/"
+
+# ── Gmail ──
+gmail:
+  scopes:
+    - "https://www.googleapis.com/auth/gmail.readonly"
+    - "https://www.googleapis.com/auth/gmail.compose"
+  check_window_minutes: 30
+  categories:
+    - urgent
+    - normal
+    - newsletter
+    - spam
+
+# ── Logging ──
+logging:
+  level: "INFO"
+  dir: "logs"
+  max_bytes: 5242880       # 5 MB
+  backup_count: 7

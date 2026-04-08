@@ -1,0 +1,92 @@
+# ════════════════════════════════════════
+# Job Search Configuration
+# ════════════════════════════════════════
+
+target_roles:
+  - "Senior Data Scientist"
+  - "Lead Data Scientist"
+  - "Applied AI Lead"
+  - "Principal Data Scientist"
+  - "Healthcare ML Engineer"
+  - "AI Governance Lead"
+  - "ML Platform Engineer"
+  - "Staff Data Scientist"
+  - "Data Science Manager"
+  - "NLP Engineer"
+
+locations:
+  - "United States"
+  - "Remote"
+  - "Massachusetts"
+  - "Boston, MA"
+  - "New York, NY"
+
+# Keywords to boost in search queries
+keywords:
+  primary:
+    - "data scientist healthcare"
+    - "machine learning healthcare"
+    - "NLP data scientist"
+    - "senior data scientist"
+    - "lead data scientist"
+    - "applied AI"
+  secondary:
+    - "MLOps engineer"
+    - "ML platform"
+    - "AI governance"
+    - "healthcare analytics"
+
+# Companies of particular interest
+priority_companies:
+  - "Humana"
+  - "UnitedHealth Group"
+  - "CVS Health"
+  - "Anthem"
+  - "Kaiser Permanente"
+  - "Cigna"
+  - "Epic Systems"
+  - "Tempus"
+  - "Flatiron Health"
+  - "Google Health"
+  - "Microsoft Health"
+  - "Amazon Health"
+  - "Meta"
+  - "Apple"
+
+# Sources configuration
+sources:
+  remoteok:
+    enabled: true
+    url: "https://remoteok.com/api"
+    tags:
+      - "data-science"
+      - "machine-learning"
+      - "python"
+
+  himalayas:
+    enabled: true
+    url: "https://himalayas.app/jobs/api"
+    categories:
+      - "data-science"
+      - "machine-learning"
+
+  indeed_rss:
+    enabled: true
+    base_url: "https://www.indeed.com/rss"
+
+  linkedin_rss:
+    enabled: true
+    base_url: "https://www.linkedin.com/jobs/search/"
+
+# Filters
+filters:
+  min_experience_years: 3
+  max_experience_years: 10
+  exclude_titles:
+    - "intern"
+    - "junior"
+    - "entry level"
+    - "director"
+    - "VP"
+    - "vice president"
+  exclude_companies: []

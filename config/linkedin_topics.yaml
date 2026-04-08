@@ -1,0 +1,80 @@
+# ════════════════════════════════════════
+# LinkedIn Content Strategy
+# ════════════════════════════════════════
+
+author:
+  name: "Agam Saraswat"
+  title: "Data Scientist — Healthcare AI @ Humana"
+  voice: "Conversational, insightful, first-person. Shares real learnings, not platitudes. Ends with a question or a punchy takeaway."
+
+# Weekday-to-pillar mapping
+# Monday=0, Tuesday=1, ... Sunday=6
+pillars:
+  0:  # Monday
+    name: "Healthcare AI & ML Insights"
+    description: "Deep dives into applied ML in healthcare — readmission models, NLP on clinical notes, population health, claims analytics. Emphasize real-world impact and responsible AI."
+    hashtags:
+      - "#HealthcareAI"
+      - "#MachineLearning"
+      - "#DataScience"
+      - "#HealthTech"
+      - "#PopulationHealth"
+
+  1:  # Tuesday
+    name: "Data Science Career Lessons"
+    description: "Honest reflections on the DS career path — interviewing, upskilling, navigating ambiguity, working cross-functionally, transitioning from analyst to scientist. Share personal journey."
+    hashtags:
+      - "#DataScienceCareer"
+      - "#CareerGrowth"
+      - "#DataScience"
+      - "#TechCareers"
+
+  2:  # Wednesday
+    name: "Python / Cloud Engineering Tips"
+    description: "Practical tips on Python, PySpark, cloud services (AWS/Azure/GCP), MLOps, Airflow, Docker. Short code snippets or architecture patterns. Useful and shareable."
+    hashtags:
+      - "#Python"
+      - "#CloudComputing"
+      - "#MLOps"
+      - "#DataEngineering"
+      - "#AWS"
+
+  3:  # Thursday
+    name: "Explainable AI & Model Governance"
+    description: "SHAP, LIME, fairness metrics, model monitoring, regulatory compliance (HIPAA, GDPR). Position as thought leader on trustworthy AI in regulated industries."
+    hashtags:
+      - "#ExplainableAI"
+      - "#ResponsibleAI"
+      - "#AIGovernance"
+      - "#HIPAA"
+      - "#TrustworthyAI"
+
+  4:  # Friday
+    name: "Real-World Analytics Impact Stories"
+    description: "Before-and-after stories of analytics projects — the problem, the approach, the result. Concrete metrics. Make the reader think 'I could apply this too.'"
+    hashtags:
+      - "#Analytics"
+      - "#DataDriven"
+      - "#DataScience"
+      - "#BusinessImpact"
+
+  5:  # Saturday (off or repost)
+    name: "Weekend — Off / Repost Prompt"
+    description: "No new post. Optionally prompt Agam to reshare a past post or engage with others' content."
+    hashtags: []
+
+  6:  # Sunday (off or repost)
+    name: "Weekend — Off / Repost Prompt"
+    description: "No new post. Optionally prompt Agam to reshare a past post or engage with others' content."
+    hashtags: []
+
+tone_guidelines: |
+  - Write as Agam, first person ("I", "we at Humana")
+  - 150-250 words, 3-5 short paragraphs
+  - Open with a hook: surprising stat, question, or bold claim
+  - End with a question to drive engagement OR a punchy one-liner
+  - Use line breaks between paragraphs (LinkedIn formatting)
+  - No emojis overload — max 2-3 total
+  - No clickbait, no "I'm humbled to announce"
+  - Be specific: mention tools, numbers, outcomes
+  - Vary structure: some posts are stories, some are tips, some are takes
