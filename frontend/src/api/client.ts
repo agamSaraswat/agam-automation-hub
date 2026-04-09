@@ -1,11 +1,18 @@
 import {
   BriefingRunResponse,
+  EditableSettings,
+  EditableSettingsUpdate,
   GmailRunResponse,
   HealthResponse,
   JobsQueueResponse,
   JobsRunResponse,
   JobsStats,
+  LinkedInDecisionResponse,
+  LinkedInDraft,
+  LinkedInPublishResponse,
   LinkedInStatus,
+  RunsHistoryResponse,
+  SchedulerStatus,
   SystemStatus,
 } from "../types/api";
 
@@ -53,6 +60,26 @@ export const apiClient = {
       body: JSON.stringify({ send_to_telegram: sendToTelegram }),
     }),
   getLinkedinStatus: (): Promise<LinkedInStatus> => fetchJson("/api/linkedin/status"),
+  getLinkedinDraft: (): Promise<LinkedInDraft> => fetchJson("/api/linkedin/draft"),
+  generateLinkedinDraft: (): Promise<LinkedInDraft> => fetchJson("/api/linkedin/draft/generate", { method: "POST" }),
+  saveLinkedinDraft: (content: string): Promise<LinkedInDraft> =>
+    fetchJson("/api/linkedin/draft", { method: "PUT", body: JSON.stringify({ content }) }),
+  approveLinkedinDraft: (): Promise<LinkedInDecisionResponse> => fetchJson("/api/linkedin/draft/approve", { method: "POST" }),
+  rejectLinkedinDraft: (): Promise<LinkedInDecisionResponse> => fetchJson("/api/linkedin/draft/reject", { method: "POST" }),
+  publishLinkedinDraft: (confirmPublish: boolean): Promise<LinkedInPublishResponse> =>
+    fetchJson("/api/linkedin/draft/publish", {
+      method: "POST",
+      body: JSON.stringify({ confirm_publish: confirmPublish }),
+    }),
+  getEditableSettings: (): Promise<EditableSettings> => fetchJson("/api/settings"),
+  updateEditableSettings: (payload: EditableSettingsUpdate): Promise<EditableSettings> =>
+    fetchJson("/api/settings", { method: "PUT", body: JSON.stringify(payload) }),
+  getRunsHistory: (limit = 25): Promise<RunsHistoryResponse> => fetchJson(`/api/runs?limit=${limit}`),
+  getSchedulerStatus: (): Promise<SchedulerStatus> => fetchJson("/api/scheduler/status"),
+  startScheduler: (confirmAction: boolean): Promise<SchedulerStatus> =>
+    fetchJson("/api/scheduler/start", { method: "POST", body: JSON.stringify({ confirm_action: confirmAction }) }),
+  stopScheduler: (confirmAction: boolean): Promise<SchedulerStatus> =>
+    fetchJson("/api/scheduler/stop", { method: "POST", body: JSON.stringify({ confirm_action: confirmAction }) }),
 };
 
 export { API_BASE_URL };

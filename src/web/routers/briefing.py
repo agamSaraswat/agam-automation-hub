@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from src.services import run_briefing_now
+from src.services import run_briefing_now, run_with_history
 from src.web.routers.utils import raise_internal
 from src.web.schemas import APIError, BriefingRunRequest, BriefingRunResponse
 
@@ -20,6 +20,13 @@ router = APIRouter(prefix="/api/briefing", tags=["briefing"])
 )
 def run_briefing(payload: BriefingRunRequest) -> BriefingRunResponse:
     try:
-        return BriefingRunResponse(**run_briefing_now(send_to_telegram=payload.send_to_telegram))
+        result = run_with_history(
+            "briefing",
+            lambda run_result: (
+                "Briefing generated" + (" and sent to Telegram" if run_result.get("sent_to_telegram") else "")
+            ),
+            lambda: run_briefing_now(send_to_telegram=payload.send_to_telegram),
+        )
+        return BriefingRunResponse(**result)
     except Exception as exc:  # pragma: no cover - defensive path
         raise_internal("Failed to run briefing.", exc)

@@ -276,3 +276,98 @@ td {
     grid-column: span 1;
   }
 }
+
+
+.linkedin-actions {
+  margin-bottom: 0.8rem;
+}
+
+.linkedin-subtitle {
+  margin-top: 0.9rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.95rem;
+}
+
+.linkedin-editor {
+  width: 100%;
+  border: 1px solid #bcccdc;
+  border-radius: 0.5rem;
+  padding: 0.65rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  margin-top: 0.4rem;
+}
+
+.publish-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  color: #334e68;
+}
+
+
+.settings-help {
+  color: #486581;
+  margin: 0.3rem 0 0.7rem;
+}
+
+.settings-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.settings-grid label {
+  display: grid;
+  gap: 0.35rem;
+  color: #334e68;
+  font-size: 0.9rem;
+}
+
+.settings-grid textarea,
+.settings-grid input {
+  border: 1px solid #bcccdc;
+  border-radius: 0.45rem;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.time-window-row {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.source-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.toggle-row {
+  display: flex !important;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.settings-notes {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #486581;
+}
+
+
+.run-failed {
+  border-color: #f8d7da !important;
+  background: #fff7f7;
+}
+
+.run-error {
+  margin: 0.3rem 0 0;
+  background: #fff1f1;
+  border: 1px solid #f5c2c7;
+  border-radius: 0.45rem;
+  padding: 0.5rem;
+  white-space: pre-wrap;
+  color: #8a1c1c;
+}

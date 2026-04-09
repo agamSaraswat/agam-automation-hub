@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { apiClient } from "../api/client";
 import { StatusCard } from "../components/StatusCard";
-import { ActivityItem, HealthResponse, SystemStatus } from "../types/api";
+import { ActivityItem, HealthResponse, SchedulerStatus, SystemStatus } from "../types/api";
 
 type DashboardPageProps = {
   onAddActivity: (entry: Omit<ActivityItem, "id" | "timestamp">) => void;
@@ -12,9 +12,11 @@ type DashboardPageProps = {
 export function DashboardPage({ onAddActivity, activity }: DashboardPageProps) {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [status, setStatus] = useState<SystemStatus | null>(null);
+  const [schedulerStatus, setSchedulerStatus] = useState<SchedulerStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [runningAction, setRunningAction] = useState<string | null>(null);
+  const [schedulerAction, setSchedulerAction] = useState<string | null>(null);
 
   const configuredServices = useMemo(() => {
     if (!status) return 0;
@@ -25,12 +27,14 @@ export function DashboardPage({ onAddActivity, activity }: DashboardPageProps) {
     setLoading(true);
     setError("");
     try {
-      const [healthResponse, statusResponse] = await Promise.all([
+      const [healthResponse, statusResponse, schedulerResponse] = await Promise.all([
         apiClient.getHealth(),
         apiClient.getStatus(),
+        apiClient.getSchedulerStatus(),
       ]);
       setHealth(healthResponse);
       setStatus(statusResponse);
+      setSchedulerStatus(schedulerResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load dashboard");
     } finally {
@@ -69,6 +73,34 @@ export function DashboardPage({ onAddActivity, activity }: DashboardPageProps) {
       setError(err instanceof Error ? err.message : "Action failed");
     } finally {
       setRunningAction(null);
+    }
+  }
+
+  async function runSchedulerAction(action: "start" | "stop") {
+    const confirmed = window.confirm(
+      action === "start"
+        ? "Start scheduler background automations now?"
+        : "Stop scheduler background automations now?",
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setSchedulerAction(action);
+    setError("");
+    try {
+      const result = action === "start"
+        ? await apiClient.startScheduler(true)
+        : await apiClient.stopScheduler(true);
+      setSchedulerStatus(result);
+      onAddActivity({
+        action: action === "start" ? "Start Scheduler" : "Stop Scheduler",
+        result: result.running ? "Scheduler is running" : "Scheduler is stopped",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Scheduler action failed");
+    } finally {
+      setSchedulerAction(null);
     }
   }
 
@@ -114,6 +146,51 @@ export function DashboardPage({ onAddActivity, activity }: DashboardPageProps) {
             {runningAction === "gmail" ? "Running..." : "Run Gmail Triage"}
           </button>
         </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <h2>Scheduler Controls</h2>
+          <span>{schedulerStatus?.running ? "Running" : "Stopped"}</span>
+        </div>
+
+        <div className="button-row">
+          <button onClick={() => runSchedulerAction("start")} disabled={schedulerAction !== null || schedulerStatus?.running}>
+            {schedulerAction === "start" ? "Starting..." : "Start Scheduler"}
+          </button>
+          <button
+            className="secondary-button"
+            onClick={() => runSchedulerAction("stop")}
+            disabled={schedulerAction !== null || !schedulerStatus?.running}
+          >
+            {schedulerAction === "stop" ? "Stopping..." : "Stop Scheduler"}
+          </button>
+        </div>
+
+        {schedulerStatus && (
+          <>
+            <ul className="kv-list">
+              <li><span>Timezone</span><strong>{schedulerStatus.timezone}</strong></li>
+              <li><span>Job Count</span><strong>{schedulerStatus.job_count}</strong></li>
+              <li><span>Next Run</span><strong>{schedulerStatus.next_run_time ? new Date(schedulerStatus.next_run_time).toLocaleString() : "N/A"}</strong></li>
+            </ul>
+
+            <h3 className="linkedin-subtitle">Configured Jobs & Cadence</h3>
+            {schedulerStatus.jobs.length === 0 ? (
+              <p>No scheduler jobs loaded yet.</p>
+            ) : (
+              <ul className="activity-list">
+                {schedulerStatus.jobs.map((job) => (
+                  <li key={job.job_id}>
+                    <strong>{job.name}</strong>
+                    <span>{job.trigger}</span>
+                    <small>Next: {job.next_run_time ? new Date(job.next_run_time).toLocaleString() : "N/A"}</small>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
       </section>
 
       <section className="panel">

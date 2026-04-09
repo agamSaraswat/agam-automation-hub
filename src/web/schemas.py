@@ -35,6 +35,78 @@ class LinkedInStatusResponse(BaseModel):
     token_warning: str | None = Field(default=None, description="Warning if token is near expiry or invalid.")
 
 
+class LinkedInDraftResponse(BaseModel):
+    today: str = Field(description="Current date in YYYY-MM-DD format.")
+    exists: bool = Field(description="Whether today's draft exists in queue.")
+    content: str = Field(default="", description="Draft content without frontmatter.")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Frontmatter metadata.")
+    status: str = Field(description="Review status for current draft.")
+    publish_supported: bool = Field(description="Whether backend publish credentials are configured.")
+
+
+class LinkedInDraftUpdateRequest(BaseModel):
+    content: str = Field(description="Updated LinkedIn draft body.")
+
+
+class LinkedInDecisionResponse(BaseModel):
+    draft: LinkedInDraftResponse = Field(description="Updated draft snapshot.")
+    message: str = Field(description="Decision result message.")
+
+
+
+
+class ActionConfirmationRequest(BaseModel):
+    confirm_action: bool = Field(
+        default=False,
+        description="Must be true to confirm a dangerous or state-changing action.",
+    )
+
+class LinkedInPublishRequest(BaseModel):
+    confirm_publish: bool = Field(
+        default=False,
+        description="Must be true to explicitly confirm publication.",
+    )
+
+
+class LinkedInPublishResponse(BaseModel):
+    published: bool = Field(description="Whether the draft was published.")
+    message: str = Field(description="Publish result message.")
+
+
+
+
+class PostingTimeWindow(BaseModel):
+    start_hour: int = Field(ge=0, le=23, description="LinkedIn posting window start hour (24h).")
+    end_hour: int = Field(ge=0, le=23, description="LinkedIn posting window end hour (24h).")
+
+
+class SecretConfigStatus(BaseModel):
+    configured: bool = Field(description="Whether the secret is configured.")
+    description: str = Field(description="Human-readable description.")
+
+
+class SettingsResponse(BaseModel):
+    target_roles: list[str] = Field(default_factory=list)
+    locations: list[str] = Field(default_factory=list)
+    include_keywords: list[str] = Field(default_factory=list)
+    exclude_keywords: list[str] = Field(default_factory=list)
+    daily_job_limit: int = Field(ge=1, le=200)
+    posting_time_window: PostingTimeWindow
+    job_sources: dict[str, bool] = Field(default_factory=dict)
+    secret_status: dict[str, SecretConfigStatus] = Field(default_factory=dict)
+    editable_fields: list[str] = Field(default_factory=list)
+    file_based_notes: list[str] = Field(default_factory=list)
+
+
+class SettingsUpdateRequest(BaseModel):
+    target_roles: list[str] = Field(min_length=1)
+    locations: list[str] = Field(min_length=1)
+    include_keywords: list[str] = Field(min_length=1)
+    exclude_keywords: list[str] = Field(default_factory=list)
+    daily_job_limit: int = Field(ge=1, le=200)
+    posting_time_window: PostingTimeWindow
+    job_sources: dict[str, bool] = Field(default_factory=dict)
+
 class SystemStatusResponse(BaseModel):
     date: str = Field(description="Current date in YYYY-MM-DD format.")
     environment: dict[str, EnvironmentVarStatus] = Field(description="Environment configuration status.")
@@ -88,6 +160,39 @@ class GmailRunResponse(BaseModel):
     summary: str = Field(description="Gmail triage summary.")
     sent_to_telegram: bool = Field(description="Whether the summary was sent to Telegram.")
 
+
+
+
+
+
+class SchedulerJobItem(BaseModel):
+    job_id: str = Field(description="Scheduler job ID.")
+    name: str = Field(description="Scheduler job display name.")
+    trigger: str = Field(description="Cadence/trigger description.")
+    next_run_time: str | None = Field(default=None, description="Next planned run time, if available.")
+
+
+class SchedulerStatusResponse(BaseModel):
+    running: bool = Field(description="Whether scheduler is currently running.")
+    timezone: str = Field(description="Scheduler timezone.")
+    started_at: str | None = Field(default=None, description="When scheduler was started.")
+    job_count: int = Field(description="Number of configured jobs in scheduler.")
+    next_run_time: str | None = Field(default=None, description="Earliest next run time, if available.")
+    jobs: list[SchedulerJobItem] = Field(default_factory=list, description="Configured jobs and cadence.")
+
+class RunHistoryItem(BaseModel):
+    run_id: str = Field(description="Unique run identifier.")
+    task_type: str = Field(description="Task category, e.g. jobs/briefing/gmail/linkedin_generation.")
+    start_time: str = Field(description="Run start timestamp (ISO-8601).")
+    end_time: str = Field(description="Run end timestamp (ISO-8601).")
+    status: str = Field(description="Run status, e.g. success/failed.")
+    summary: str = Field(description="Short run summary.")
+    error_message: str | None = Field(default=None, description="Failure details, when status is failed.")
+
+
+class RunsHistoryResponse(BaseModel):
+    items: list[RunHistoryItem] = Field(default_factory=list, description="Recent run records.")
+    count: int = Field(description="Number of returned run records.")
 
 class APIError(BaseModel):
     detail: str = Field(description="Error message.")
