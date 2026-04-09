@@ -30,6 +30,10 @@ google-api-python-client==2.155.0
 # ── Scheduling ──
 apscheduler==3.10.4
 
+# ── Web API ──
+fastapi==0.115.5
+uvicorn==0.32.1
+
 # ── Database ──
 # sqlite3 is stdlib — no extra dep needed
 

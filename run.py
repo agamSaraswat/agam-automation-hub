@@ -25,6 +25,13 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from src.services.automation import (
+    get_environment_status,
+    get_system_status,
+    run_briefing_now,
+    run_gmail_triage_now,
+    run_jobs_pipeline,
+)
 
 # Ensure repo root is on the path
 REPO_ROOT = Path(__file__).resolve().parent
@@ -72,15 +79,7 @@ OPTIONAL_VARS = {
 
 def check_env() -> dict:
     """Check environment variables. Returns dict of {var: status}."""
-    results = {}
-    for var, desc in {**REQUIRED_VARS, **OPTIONAL_VARS}.items():
-        val = os.getenv(var, "")
-        results[var] = {
-            "set": bool(val),
-            "required": var in REQUIRED_VARS,
-            "description": desc,
-        }
-    return results
+    return get_environment_status()
 
 
 def validate_required_env() -> bool:
@@ -103,30 +102,26 @@ def validate_required_env() -> bool:
 def cmd_briefing() -> None:
     """Run morning briefing now."""
     console.print("\n[bold]☀️ Generating morning briefing...[/bold]\n")
-    from src.briefing.morning_briefing import generate_briefing
-    briefing = generate_briefing()
+    result = run_briefing_now(send_to_telegram=True)
+    briefing = result["briefing"]
     console.print(Panel(briefing, title="Morning Briefing", border_style="cyan"))
 
-    # Send to Telegram if configured
-    if os.getenv("TELEGRAM_BOT_TOKEN") and os.getenv("TELEGRAM_CHAT_ID"):
-        from src.messaging.telegram_bot import send_message_sync
-        send_message_sync(briefing)
+    if result["sent_to_telegram"]:
         console.print("[green]Sent to Telegram.[/green]\n")
 
 
 def cmd_jobs() -> None:
     """Run job search + tailoring pipeline."""
     console.print("\n[bold]🔍 Running job search pipeline...[/bold]\n")
-    from src.jobs.scraper import run_scraper
-    from src.jobs.tailoring_engine import run_tailoring
     from src.jobs.application_queue import show_queue, show_stats
 
-    new_count = run_scraper()
+    result = run_jobs_pipeline()
+    new_count = result["scraped_new_jobs"]
     console.print(f"[green]Scraped {new_count} new jobs.[/green]")
 
     if new_count > 0:
         console.print("\n[bold]✍️ Tailoring resumes...[/bold]\n")
-        tailored = run_tailoring()
+        tailored = result["tailored_jobs"]
         console.print(f"[green]Tailored {tailored} applications.[/green]")
 
     show_queue()
@@ -150,9 +145,8 @@ def cmd_telegram() -> None:
 def cmd_gmail() -> None:
     """Run Gmail triage now."""
     console.print("\n[bold]📧 Running Gmail triage...[/bold]\n")
-    from src.messaging.gmail_triage import run_triage
-    result = run_triage()
-    console.print(result)
+    result = run_gmail_triage_now(send_to_telegram=False)
+    console.print(result["summary"])
 
 
 def cmd_schedule() -> None:
@@ -164,15 +158,14 @@ def cmd_schedule() -> None:
 
 def cmd_status() -> None:
     """Print system status dashboard."""
-    from src.jobs.deduplicator import init_db, get_stats
-
-    init_db()
-    stats = get_stats()
-    env = check_env()
+    snapshot = get_system_status()
+    stats = snapshot["jobs"]
+    env = snapshot["environment"]
+    linkedin = snapshot["linkedin"]
 
     console.print()
     console.print(Panel(
-        f"[bold]Agam Automation Hub[/bold] — {date.today().isoformat()}",
+        f"[bold]Agam Automation Hub[/bold] — {snapshot['date']}",
         border_style="cyan",
     ))
 
@@ -196,24 +189,13 @@ def cmd_status() -> None:
         console.print(f"    {status}: {count}")
 
     # LinkedIn status
-    queue_file = REPO_ROOT / "output" / "linkedin" / "queue" / f"{date.today().isoformat()}.md"
-    posted_file = REPO_ROOT / "output" / "linkedin" / "posted" / f"{date.today().isoformat()}.md"
-    li_status = "Posted ✅" if posted_file.exists() else (
-        "In queue (review needed)" if queue_file.exists() else "Not generated"
-    )
-    console.print(f"\n[bold]💼 LinkedIn[/bold]: {li_status}")
+    console.print(f"\n[bold]💼 LinkedIn[/bold]: {linkedin['status']}")
 
     # Token expiry check
-    token_date = os.getenv("LINKEDIN_TOKEN_SET_DATE", "")
-    if token_date:
-        try:
-            age = (date.today() - datetime.strptime(token_date, "%Y-%m-%d").date()).days
-            if age > 50:
-                console.print(f"  [red]⚠ Token is {age} days old — refresh soon![/red]")
-            else:
-                console.print(f"  Token age: {age} days")
-        except ValueError:
-            pass
+    if linkedin["token_warning"]:
+        console.print(f"  [red]⚠ {linkedin['token_warning']}[/red]")
+    elif linkedin["token_age_days"] is not None:
+        console.print(f"  Token age: {linkedin['token_age_days']} days")
 
     console.print()
 
