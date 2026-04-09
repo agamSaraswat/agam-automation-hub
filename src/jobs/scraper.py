@@ -24,6 +24,7 @@ import yaml
 from bs4 import BeautifulSoup
 
 from src.jobs.deduplicator import init_db, add_job, count_todays_jobs
+from src.jobs.filtering import apply_relevance_filter
 
 logger = logging.getLogger(__name__)
 
@@ -83,17 +84,6 @@ def scrape_remoteok(config: dict) -> list[dict]:
             description = _clean_html(item.get("description", ""))
             tags = item.get("tags", [])
 
-            # Filter: check if relevant to DS/ML
-            title_lower = title.lower()
-            keywords = config.get("keywords", {}).get("primary", [])
-            tag_str = " ".join(tags).lower()
-            relevant = any(
-                kw.lower() in title_lower or kw.lower() in tag_str
-                for kw in ["data", "machine learning", "ml", "ai", "nlp", "scientist", "analytics"]
-            )
-            if not relevant:
-                continue
-
             jobs.append({
                 "title": title,
                 "company": company,
@@ -101,8 +91,9 @@ def scrape_remoteok(config: dict) -> list[dict]:
                 "location": location,
                 "jd_text": description[:5000],
                 "source": "remoteok",
+                "tags": tags,
             })
-        logger.info("RemoteOK: found %d relevant jobs", len(jobs))
+        logger.info("RemoteOK: found %d raw jobs", len(jobs))
     except Exception as exc:
         logger.error("RemoteOK scrape failed: %s", exc)
 
@@ -233,18 +224,17 @@ def run_scraper() -> int:
 
     logger.info("Total raw jobs collected: %d", len(all_jobs))
 
-    # Filter by excluded titles
-    exclude_titles = [t.lower() for t in config.get("filters", {}).get("exclude_titles", [])]
-    filtered = []
-    for job in all_jobs:
-        title_lower = job["title"].lower()
-        if any(ex in title_lower for ex in exclude_titles):
-            continue
-        filtered.append(job)
+    kept_jobs, rejected_jobs = apply_relevance_filter(all_jobs, config)
+    logger.info(
+        "Relevance filter kept %d jobs and rejected %d jobs",
+        len(kept_jobs),
+        len(rejected_jobs),
+    )
+    _write_filter_report(kept_jobs=kept_jobs, rejected_jobs=rejected_jobs)
 
     # Add to DB, respecting daily limit
     added = 0
-    for job in filtered:
+    for job in kept_jobs:
         if added >= remaining:
             break
         was_added = add_job(
@@ -261,6 +251,39 @@ def run_scraper() -> int:
 
     logger.info("Added %d new jobs to queue (daily total: %d)", added, current_count + added)
     return added
+
+
+def _write_filter_report(kept_jobs: list[dict], rejected_jobs: list[dict]) -> None:
+    """Write explainable keep/reject decisions for auditing relevance."""
+    out_dir = Path(__file__).resolve().parent.parent.parent / "output" / "jobs" / date.today().isoformat()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    report_path = out_dir / "filtering_report.jsonl"
+
+    with open(report_path, "w", encoding="utf-8") as f:
+        for job in kept_jobs:
+            row = {
+                "decision": "kept",
+                "score": job.get("match_score", 0),
+                "title": job.get("title", ""),
+                "company": job.get("company", ""),
+                "source": job.get("source", ""),
+                "location": job.get("location", ""),
+                "reasons": job.get("reasons", []),
+            }
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+        for job in rejected_jobs:
+            row = {
+                "decision": "rejected",
+                "score": job.get("match_score", 0),
+                "title": job.get("title", ""),
+                "company": job.get("company", ""),
+                "source": job.get("source", ""),
+                "location": job.get("location", ""),
+                "reject_reason": job.get("reject_reason", ""),
+                "reasons": job.get("reasons", []),
+            }
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ A fully local, Python-powered personal automation system that handles daily job 
 | Requirement | Details |
 |---|---|
 | **Python** | 3.10 or higher |
+| **Node.js** | 18 or higher (for React frontend) |
 | **Anthropic API key** | Claude Pro — [console.anthropic.com](https://console.anthropic.com/) |
 | **Telegram account** | Free — for bot + notifications |
 | **LinkedIn Developer App** | Free — for posting ([developers page](https://www.linkedin.com/developers/apps)) |
@@ -123,6 +124,103 @@ python run.py --gmail
 ```
 
 Fetches unread emails from the last 30 minutes, classifies them (urgent / normal / newsletter / spam), and sends a summary to Telegram. Urgent emails get draft reply suggestions. **Emails are never auto-sent.**
+
+---
+
+## Web App Skeleton (Option B)
+
+This repo now includes an initial web stack while preserving the existing CLI:
+
+- **FastAPI backend**: `src/web/main.py`
+- **Shared service layer**: `src/services/automation.py` (used by CLI + API)
+- **React + TypeScript frontend**: `frontend/`
+- **Dev runner**: `run_web.py`
+
+### Frontend Dashboard (first usable version)
+
+The React UI now includes:
+
+- Sidebar navigation
+- Top header
+- Pages: Dashboard, Jobs, LinkedIn, Gmail, Settings, Runs/Logs
+- Dashboard quick actions wired to backend endpoints
+- Jobs page with status/source/search filters and summary cards
+- Loading and error states for API calls
+
+### 1) Install dependencies
+
+```bash
+# Python deps (includes FastAPI + uvicorn)
+pip install -r requirements.txt
+
+# Frontend deps
+cd frontend
+npm install
+cd ..
+```
+
+### 2) Run backend + frontend together
+
+```bash
+python run_web.py --mode both
+```
+
+- Backend API: `http://localhost:8000`
+- Frontend: `http://localhost:5173`
+
+### 3) Run services separately (optional)
+
+```bash
+# Backend only
+python -m uvicorn src.web.main:app --reload --host 0.0.0.0 --port 8000
+
+# Frontend only
+cd frontend && npm run dev
+```
+
+### 4) Verify connectivity
+
+- Backend health endpoint: `GET /api/health`
+- Backend system snapshot endpoint: `GET /api/status`
+- Run jobs pipeline: `POST /api/jobs/run`
+- Read jobs queue: `GET /api/jobs/queue`
+- Read jobs stats: `GET /api/jobs/stats`
+- Run briefing: `POST /api/briefing/run`
+- Run Gmail triage: `POST /api/gmail/run`
+- LinkedIn status: `GET /api/linkedin/status`
+- Frontend home page fetches `/api/health` and shows connection status.
+
+### Job relevance filtering (configurable)
+
+The scraper now applies configurable relevance scoring before jobs enter the visible queue.
+Tune this in `config/job_search.yaml` under `filters`:
+
+- `include_keywords`
+- `exclude_keywords`
+- `include_titles`
+- `exclude_titles`
+- `preferred_locations`
+- `remote_preference`
+- `minimum_match_threshold`
+
+Each run writes explainable keep/reject decisions to:
+
+- `output/jobs/<YYYY-MM-DD>/filtering_report.jsonl`
+
+### Local CORS
+
+For local development, CORS allows:
+
+- `http://localhost:5173`
+- `http://127.0.0.1:5173`
+- `http://localhost:3000`
+- `http://127.0.0.1:3000`
+
+Override via:
+
+```bash
+export WEB_CORS_ORIGINS="http://localhost:5173,http://localhost:4173"
+```
 
 ---
 

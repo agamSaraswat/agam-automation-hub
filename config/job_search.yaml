@@ -82,6 +82,28 @@ sources:
 filters:
   min_experience_years: 3
   max_experience_years: 10
+  # Explicit relevance controls for queue quality
+  include_keywords:
+    - "data scientist"
+    - "machine learning"
+    - "nlp"
+    - "predictive analytics"
+    - "healthcare"
+    - "ai governance"
+  exclude_keywords:
+    - "sales"
+    - "account executive"
+    - "frontend"
+    - "android"
+    - "ios"
+    - "qa tester"
+  include_titles:
+    - "senior data scientist"
+    - "lead data scientist"
+    - "staff data scientist"
+    - "principal data scientist"
+    - "healthcare ml engineer"
+    - "nlp engineer"
   exclude_titles:
     - "intern"
     - "junior"
@@ -89,4 +111,12 @@ filters:
     - "director"
     - "VP"
     - "vice president"
+  preferred_locations:
+    - "remote"
+    - "united states"
+    - "massachusetts"
+    - "boston"
+    - "new york"
+  remote_preference: true
+  minimum_match_threshold: 35
   exclude_companies: []
