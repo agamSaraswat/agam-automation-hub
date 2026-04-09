@@ -29,7 +29,6 @@ from src.jobs.filtering import apply_relevance_filter
 logger = logging.getLogger(__name__)
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "job_search.yaml"
-DAILY_LIMIT = int(os.getenv("DAILY_JOB_LIMIT", "10"))
 REQUEST_TIMEOUT = 15
 HEADERS = {
     "User-Agent": (
@@ -43,6 +42,25 @@ def load_config() -> dict:
     """Load job search configuration."""
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+def _get_daily_limit() -> int:
+    """Get daily job limit from env override or settings.yaml fallback."""
+    env_value = os.getenv("DAILY_JOB_LIMIT", "").strip()
+    if env_value:
+        try:
+            return max(1, int(env_value))
+        except ValueError:
+            logger.warning("Invalid DAILY_JOB_LIMIT env value '%s'; falling back to settings.yaml", env_value)
+
+    settings_path = Path(__file__).resolve().parent.parent.parent / "config" / "settings.yaml"
+    try:
+        with open(settings_path, "r", encoding="utf-8") as settings_file:
+            settings_cfg = yaml.safe_load(settings_file) or {}
+        return max(1, int(settings_cfg.get("jobs", {}).get("daily_limit", 10)))
+    except Exception as exc:
+        logger.warning("Unable to read daily_limit from settings.yaml: %s", exc)
+        return 10
 
 
 def _clean_html(html: str) -> str:
@@ -211,9 +229,10 @@ def run_scraper() -> int:
     config = load_config()
 
     current_count = count_todays_jobs()
-    remaining = DAILY_LIMIT - current_count
+    daily_limit = _get_daily_limit()
+    remaining = daily_limit - current_count
     if remaining <= 0:
-        logger.info("Daily limit reached (%d). Skipping scrape.", DAILY_LIMIT)
+        logger.info("Daily limit reached (%d). Skipping scrape.", daily_limit)
         return 0
 
     # Collect from all sources

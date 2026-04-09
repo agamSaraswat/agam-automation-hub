@@ -43,7 +43,7 @@ export default function App() {
     if (page === "settings") {
       return <SettingsPage />;
     }
-    return <RunsLogsPage activity={activity} />;
+    return <RunsLogsPage />;
   }, [page, activity]);
 
   return (

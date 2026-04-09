@@ -16,6 +16,10 @@ def _spawn(cmd: list[str], cwd: Path | None = None) -> subprocess.Popen:
     return subprocess.Popen(cmd, cwd=str(cwd) if cwd else None)
 
 
+def _npm_command() -> str:
+    return "npm.cmd" if sys.platform.startswith("win") else "npm"
+
+
 def _run_backend() -> int:
     return subprocess.call(
         [
@@ -34,7 +38,7 @@ def _run_backend() -> int:
 
 
 def _run_frontend() -> int:
-    return subprocess.call(["npm", "run", "dev"], cwd=FRONTEND_DIR)
+    return subprocess.call([_npm_command(), "run", "dev"], cwd=FRONTEND_DIR)
 
 
 def _run_both() -> int:
@@ -52,7 +56,7 @@ def _run_both() -> int:
         ],
         cwd=REPO_ROOT,
     )
-    frontend = _spawn(["npm", "run", "dev"], cwd=FRONTEND_DIR)
+    frontend = _spawn([_npm_command(), "run", "dev"], cwd=FRONTEND_DIR)
 
     print("🚀 Backend:  http://localhost:8000")
     print("🚀 Frontend: http://localhost:5173")

@@ -1,19 +1,14 @@
-"""
-Scheduler — APScheduler with AsyncIOScheduler.
+"""Scheduler controls built on APScheduler for local single-user automation."""
 
-Schedule:
-  07:00         — morning_briefing()
-  08:00-11:00   — linkedin_post() [randomized daily within window]
-  08:30         — job_scraper() + tailoring_engine()
-  Every 30min   — gmail_triage()
-  21:00         — daily_summary()
-"""
+from __future__ import annotations
 
 import asyncio
 import logging
 import os
 import random
 from datetime import date, datetime
+from pathlib import Path
+from typing import Any
 
 import yaml
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -24,13 +19,17 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+SETTINGS_PATH = REPO_ROOT / "config" / "settings.yaml"
 TIMEZONE = os.getenv("TIMEZONE", "America/New_York")
 
+_scheduler: AsyncIOScheduler | None = None
+_scheduler_started_at: str | None = None
 
-# ── Wrapper functions (sync tasks run in executor) ────────
+
+# ── Wrapper functions (sync tasks run in scheduler threads) ────────
 
 def _run_morning_briefing() -> None:
-    """Generate and send morning briefing to Telegram."""
     logger.info("⏰ Running morning briefing...")
     try:
         from src.briefing.morning_briefing import generate_briefing
@@ -44,7 +43,6 @@ def _run_morning_briefing() -> None:
 
 
 def _run_job_pipeline() -> None:
-    """Run job scraper + tailoring engine."""
     logger.info("⏰ Running job pipeline...")
     try:
         from src.jobs.scraper import run_scraper
@@ -66,7 +64,6 @@ def _run_job_pipeline() -> None:
 
 
 def _run_linkedin_generation() -> None:
-    """Generate a LinkedIn post (review happens in terminal)."""
     logger.info("⏰ Generating LinkedIn post...")
     try:
         from src.linkedin.generator import generate_post
@@ -75,8 +72,8 @@ def _run_linkedin_generation() -> None:
         post = generate_post()
         if post and "Weekend" not in post:
             send_message_sync(
-                f"💼 LinkedIn post generated for today.\n"
-                f"Run `python run.py --linkedin` in terminal to review and publish."
+                "💼 LinkedIn post generated for today.\n"
+                "Review from the web LinkedIn page or run `python run.py --linkedin`."
             )
         logger.info("LinkedIn post generated.")
     except Exception as exc:
@@ -84,7 +81,6 @@ def _run_linkedin_generation() -> None:
 
 
 def _run_gmail_triage() -> None:
-    """Run Gmail triage and send results to Telegram."""
     logger.info("📧 Running Gmail triage...")
     try:
         from src.messaging.gmail_triage import run_triage
@@ -99,7 +95,6 @@ def _run_gmail_triage() -> None:
 
 
 def _run_daily_summary() -> None:
-    """Send end-of-day summary to Telegram."""
     logger.info("⏰ Running daily summary...")
     try:
         from src.jobs.deduplicator import get_stats
@@ -108,8 +103,6 @@ def _run_daily_summary() -> None:
         stats = get_stats()
         today = date.today().isoformat()
 
-        # Check if LinkedIn post was made
-        from pathlib import Path
         posted_file = Path("output/linkedin/posted") / f"{today}.md"
         li_status = "✅ Posted" if posted_file.exists() else "❌ Not posted"
 
@@ -127,73 +120,145 @@ def _run_daily_summary() -> None:
         logger.error("Daily summary failed: %s", exc)
 
 
-# ── Scheduler setup ──────────────────────────────────────
+def _load_schedule_config() -> dict[str, Any]:
+    with open(SETTINGS_PATH, "r", encoding="utf-8") as file:
+        payload = yaml.safe_load(file) or {}
+    return payload.get("schedule", {}) if isinstance(payload, dict) else {}
 
-def start_scheduler() -> None:
-    """Configure and start the APScheduler."""
-    scheduler = AsyncIOScheduler(timezone=TIMEZONE)
 
-    # 07:00 — Morning briefing
+def _parse_hhmm(raw: str, fallback_hour: int, fallback_minute: int) -> tuple[int, int]:
+    try:
+        hour_str, minute_str = (raw or "").split(":", 1)
+        return int(hour_str), int(minute_str)
+    except Exception:
+        return fallback_hour, fallback_minute
+
+
+def _add_jobs(scheduler: AsyncIOScheduler) -> None:
+    schedule = _load_schedule_config()
+
+    morning_hour, morning_minute = _parse_hhmm(schedule.get("morning_briefing", "07:00"), 7, 0)
+    job_hour, job_minute = _parse_hhmm(schedule.get("job_scraper", "08:30"), 8, 30)
+    summary_hour, summary_minute = _parse_hhmm(schedule.get("daily_summary", "21:00"), 21, 0)
+
+    li_start = int(schedule.get("linkedin_post_window_start", 8))
+    li_end = int(schedule.get("linkedin_post_window_end", 11))
+    li_end_exclusive = max(li_start + 1, li_end)
+    li_hour = random.randint(li_start, li_end_exclusive - 1)
+    li_minute = random.randint(0, 59)
+
+    gmail_interval = int(schedule.get("gmail_triage_interval_minutes", 30))
+
     scheduler.add_job(
         _run_morning_briefing,
-        CronTrigger(hour=7, minute=0, timezone=TIMEZONE),
+        CronTrigger(hour=morning_hour, minute=morning_minute, timezone=TIMEZONE),
         id="morning_briefing",
         name="Morning Briefing",
+        replace_existing=True,
     )
-
-    # 08:00-11:00 — LinkedIn post (random time within window)
-    li_hour = random.randint(8, 10)
-    li_minute = random.randint(0, 59)
     scheduler.add_job(
         _run_linkedin_generation,
         CronTrigger(hour=li_hour, minute=li_minute, timezone=TIMEZONE),
-        id="linkedin_post",
-        name=f"LinkedIn Post ({li_hour:02d}:{li_minute:02d})",
+        id="linkedin_generation",
+        name=f"LinkedIn Generation ({li_hour:02d}:{li_minute:02d})",
+        replace_existing=True,
     )
-
-    # 08:30 — Job pipeline
     scheduler.add_job(
         _run_job_pipeline,
-        CronTrigger(hour=8, minute=30, timezone=TIMEZONE),
+        CronTrigger(hour=job_hour, minute=job_minute, timezone=TIMEZONE),
         id="job_pipeline",
         name="Job Pipeline",
+        replace_existing=True,
     )
-
-    # Every 30 minutes — Gmail triage
     scheduler.add_job(
         _run_gmail_triage,
-        IntervalTrigger(minutes=30),
+        IntervalTrigger(minutes=max(1, gmail_interval)),
         id="gmail_triage",
-        name="Gmail Triage",
+        name=f"Gmail Triage (every {max(1, gmail_interval)}m)",
+        replace_existing=True,
     )
-
-    # 21:00 — Daily summary
     scheduler.add_job(
         _run_daily_summary,
-        CronTrigger(hour=21, minute=0, timezone=TIMEZONE),
+        CronTrigger(hour=summary_hour, minute=summary_minute, timezone=TIMEZONE),
         id="daily_summary",
         name="Daily Summary",
+        replace_existing=True,
     )
 
-    scheduler.start()
-    logger.info("Scheduler started with %d jobs:", len(scheduler.get_jobs()))
-    for job in scheduler.get_jobs():
-        logger.info("  • %s — next run: %s", job.name, job.next_run_time)
 
-    print("\n📅 Scheduler is running. Press Ctrl+C to stop.\n")
-    print("Scheduled jobs:")
-    for job in scheduler.get_jobs():
-        print(f"  • {job.name} — next: {job.next_run_time}")
-    print()
+def _scheduler_jobs_payload() -> list[dict[str, Any]]:
+    if _scheduler is None:
+        return []
+    jobs = []
+    for job in _scheduler.get_jobs():
+        jobs.append(
+            {
+                "job_id": job.id,
+                "name": job.name,
+                "trigger": str(job.trigger),
+                "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
+            }
+        )
+    return jobs
 
-    # Keep the event loop alive
-    try:
-        asyncio.get_event_loop().run_forever()
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
-        print("\nScheduler stopped.")
+
+def get_scheduler_status() -> dict[str, Any]:
+    running = bool(_scheduler and _scheduler.running)
+    jobs = _scheduler_jobs_payload()
+    next_run_time = None
+    if jobs:
+        candidates = [j["next_run_time"] for j in jobs if j.get("next_run_time")]
+        next_run_time = min(candidates) if candidates else None
+
+    return {
+        "running": running,
+        "timezone": TIMEZONE,
+        "started_at": _scheduler_started_at,
+        "job_count": len(jobs),
+        "next_run_time": next_run_time,
+        "jobs": jobs,
+    }
+
+
+def start_scheduler(foreground: bool = True) -> dict[str, Any]:
+    """Configure and start APScheduler. Foreground mode keeps loop alive for CLI."""
+    global _scheduler, _scheduler_started_at
+
+    if _scheduler and _scheduler.running:
+        return get_scheduler_status()
+
+    _scheduler = AsyncIOScheduler(timezone=TIMEZONE)
+    _add_jobs(_scheduler)
+    _scheduler.start()
+    _scheduler_started_at = datetime.now().isoformat()
+    logger.info("Scheduler started with %d jobs.", len(_scheduler.get_jobs()))
+
+    if foreground:
+        print("\n📅 Scheduler is running. Press Ctrl+C to stop.\n")
+        for job in _scheduler.get_jobs():
+            print(f"  • {job.name} — next: {job.next_run_time}")
+        print()
+        try:
+            asyncio.get_event_loop().run_forever()
+        except (KeyboardInterrupt, SystemExit):
+            stop_scheduler()
+            print("\nScheduler stopped.")
+
+    return get_scheduler_status()
+
+
+def stop_scheduler() -> dict[str, Any]:
+    """Stop scheduler if running."""
+    global _scheduler, _scheduler_started_at
+
+    if _scheduler and _scheduler.running:
+        _scheduler.shutdown(wait=False)
+
+    _scheduler = None
+    _scheduler_started_at = None
+    return get_scheduler_status()
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
-    start_scheduler()
+    start_scheduler(foreground=True)

@@ -39,6 +39,77 @@ python run.py --setup
 
 The setup wizard walks you through configuring each service, writing your `.env` file, creating output directories, and initialising the SQLite database.
 
+
+## Daily Local Dev (One Command)
+
+### 1) Create your local env file once
+
+```bash
+cp .env.example .env
+```
+
+Windows (PowerShell):
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Then fill only the services you use.
+
+### 2) Install deps once
+
+```bash
+pip install -r requirements.txt
+cd frontend && npm install && cd ..
+```
+
+### 3) Start backend + frontend together (recommended)
+
+macOS/Linux:
+
+```bash
+python run_web.py --mode both
+# or: ./scripts/dev.sh
+```
+
+Windows CMD:
+
+```bat
+dev.bat
+```
+
+Windows PowerShell:
+
+```powershell
+./dev.ps1
+```
+
+- Backend API: `http://localhost:8000`
+- Frontend: `http://localhost:5173`
+
+### 4) Run basic checks
+
+macOS/Linux:
+
+```bash
+./scripts/lint.sh
+./scripts/test.sh
+```
+
+Windows CMD:
+
+```bat
+lint.bat
+test.bat
+```
+
+Windows PowerShell:
+
+```powershell
+./lint.ps1
+./test.ps1
+```
+
 ---
 
 ## One-Time Setup Per Service
@@ -147,7 +218,7 @@ The React UI now includes:
 - Jobs page with status/source/search filters and summary cards
 - Loading and error states for API calls
 
-### 1) Install dependencies
+### 1) Install dependencies (if not already installed)
 
 ```bash
 # Python deps (includes FastAPI + uvicorn)
@@ -158,6 +229,12 @@ cd frontend
 npm install
 cd ..
 ```
+
+Windows helper scripts:
+
+- `dev.bat` / `dev.ps1`
+- `lint.bat` / `lint.ps1`
+- `test.bat` / `test.ps1`
 
 ### 2) Run backend + frontend together
 
@@ -187,8 +264,78 @@ cd frontend && npm run dev
 - Read jobs stats: `GET /api/jobs/stats`
 - Run briefing: `POST /api/briefing/run`
 - Run Gmail triage: `POST /api/gmail/run`
+- Recent backend runs: `GET /api/runs`
+- Scheduler status/control:
+  - `GET /api/scheduler/status`
+  - `POST /api/scheduler/start` (requires `{"confirm_action": true}`)
+  - `POST /api/scheduler/stop` (requires `{"confirm_action": true}`)
 - LinkedIn status: `GET /api/linkedin/status`
+- LinkedIn review workflow:
+  - `GET /api/linkedin/draft`
+  - `POST /api/linkedin/draft/generate`
+  - `PUT /api/linkedin/draft`
+  - `POST /api/linkedin/draft/approve`
+  - `POST /api/linkedin/draft/reject`
+  - `POST /api/linkedin/draft/publish` (requires `confirm_publish=true` and approved status)
+- Settings (safe non-secret editor):
+  - `GET /api/settings`
+  - `PUT /api/settings`
+  - Editable in UI: target roles, locations, include/exclude keywords, daily job limit, LinkedIn posting window, and source toggles.
+  - Secrets are never returned; only configured/not-configured status is exposed.
+- Frontend LinkedIn page now supports the full human review flow: generate, edit, approve/reject, and guarded publish.
 - Frontend home page fetches `/api/health` and shows connection status.
+
+
+### Scheduler controls from frontend
+
+The Dashboard now includes scheduler controls for local single-user operation:
+
+- View whether APScheduler is running
+- Start scheduler from the UI
+- Stop scheduler from the UI
+- See configured jobs, cadence trigger strings, and next planned runs (when available)
+
+This reuses the existing APScheduler implementation instead of replacing it.
+
+
+
+### Known limitations (local single-user hardening notes)
+
+- Scheduler state is process-local; if the backend process restarts, scheduler returns to stopped until started again.
+- Run history is a local JSONL file (`output/runs/history.jsonl`), intended for single-user local operation.
+- Error messages in run history are redacted for common token patterns, but you should still avoid logging full secret values in custom code.
+- Destructive/state-changing actions require explicit confirmation payloads (scheduler start/stop, LinkedIn publish).
+
+### Run observability
+
+The backend now stores a lightweight run history for key automation tasks in `output/runs/history.jsonl` with:
+
+- `run_id`
+- `task_type`
+- `start_time` / `end_time`
+- `status`
+- `summary`
+- `error_message` (if failed)
+
+Tracked task types: `jobs`, `briefing`, `gmail`, and `linkedin_generation`.
+The frontend **Runs / Logs** page reads this via `GET /api/runs` to show latest runs and failure details.
+
+### Settings page coverage
+
+The **Settings** page now supports common day-to-day tuning without hand-editing YAML:
+
+- `target_roles` (job_search.yaml)
+- `locations` (job_search.yaml)
+- `filters.include_keywords` / `filters.exclude_keywords` (job_search.yaml)
+- `jobs.daily_limit` (settings.yaml)
+- `schedule.linkedin_post_window_start` / `schedule.linkedin_post_window_end` (settings.yaml)
+- `sources.*.enabled` toggles (job_search.yaml)
+
+Still file-based for now:
+
+- Secret values in `.env` (API keys/tokens)
+- Advanced filtering knobs (e.g., include/exclude titles, minimum match threshold)
+- Other scheduler settings not listed above
 
 ### Job relevance filtering (configurable)
 

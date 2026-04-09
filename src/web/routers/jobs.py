@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from src.services import get_jobs_queue, get_jobs_stats, run_jobs_pipeline
+from src.services import get_jobs_queue, get_jobs_stats, run_jobs_pipeline, run_with_history
 from src.web.routers.utils import raise_internal
 from src.web.schemas import APIError, JobsQueueResponse, JobsRunResponse, JobsStats
 
@@ -20,7 +20,16 @@ router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 )
 def run_jobs() -> JobsRunResponse:
     try:
-        return JobsRunResponse(**run_jobs_pipeline())
+        payload = run_with_history(
+            "jobs",
+            lambda result: (
+                f"Scraped {result.get('scraped_new_jobs', 0)} jobs, "
+                f"tailored {result.get('tailored_jobs', 0)}, "
+                f"queue size {result.get('queue_size_today', 0)}"
+            ),
+            run_jobs_pipeline,
+        )
+        return JobsRunResponse(**payload)
     except Exception as exc:  # pragma: no cover - defensive path
         raise_internal("Failed to run jobs pipeline.", exc)
 
